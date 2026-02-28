@@ -1,10 +1,10 @@
-import { redirect } from 'next/navigation';
+import ParticipantCheckInClient from "./ParticipantCheckInClient";
 
 interface Props {
     params: Promise<{ participantId: string }>;
 }
 
 export default async function ParticipantPage({ params }: Props) {
-    const { participantId } = await params;
-    redirect(`/participant/${participantId}/login`);
+    // Render the check-in component directly for incoming participants
+    return <ParticipantCheckInClient />;
 }
