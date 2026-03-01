@@ -259,3 +259,47 @@ export async function labCheckInAction(
     checkInType: 'labCheckIn',
   });
 }
+
+/**
+ * Manual check-in verifying both Participant ID and Team ID
+ */
+export async function manualCheckInAction(
+  participantId: string,
+  teamId: string
+): Promise<ActionResult<CheckInSuccessData>> {
+  // Rate limiting
+  const identifier = await getRateLimitIdentifier();
+  const rateLimitResult = checkInRateLimiter.check(identifier);
+
+  if (!rateLimitResult.allowed) {
+    return createErrorResponse(
+      `Rate limit exceeded. Please try again in ${Math.ceil(rateLimitResult.retryAfterMs / 1000)} seconds.`,
+      'RATE_LIMITED'
+    );
+  }
+
+  try {
+    const participant = await getParticipantById(participantId);
+
+    if (!participant) {
+      return createErrorResponse('Participant not found', 'NOT_FOUND');
+    }
+
+    // Verify Team ID
+    if (participant.teamId !== teamId) {
+      return createErrorResponse('Invalid Team ID provided for this participant', 'VALIDATION_ERROR');
+    }
+
+    // Pass to standard check-in logic
+    return checkInAction({
+      participantId,
+      checkInType: 'collegeCheckIn',
+    });
+  } catch (error) {
+    console.error('Manual check-in error:', error);
+    return createErrorResponse(
+      error instanceof Error ? error.message : 'Failed to perform manual check-in',
+      'DB_ERROR'
+    );
+  }
+}

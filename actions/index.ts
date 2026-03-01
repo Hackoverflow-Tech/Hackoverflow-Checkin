@@ -20,6 +20,7 @@ export {
   resetCheckInAction,
   collegeCheckInAction,
   labCheckInAction,
+  manualCheckInAction,
 } from './checkin';
 
 // Database actions

@@ -39,6 +39,7 @@ export const DBParticipantSchema = z.object({
   phone: z.string().optional(),
   role: z.string().optional(),
   teamName: z.string().optional(),
+  teamId: z.string().optional(),
   institute: z.string().optional(),
   labAllotted: z.string().optional(),
   roomNo: z.string().optional(), // Accommodation room number
@@ -60,6 +61,7 @@ export const ClientParticipantSchema = z.object({
   phone: z.string().optional(),
   role: z.string().optional(),
   teamName: z.string().optional(),
+  teamId: z.string().optional(),
   institute: z.string().optional(),
   labAllotted: z.string().optional(),
   roomNo: z.string().optional(),
@@ -124,6 +126,7 @@ export function toClientParticipant(participant: DBParticipant): ClientParticipa
     phone: participant.phone,
     role: participant.role,
     teamName: participant.teamName,
+    teamId: participant.teamId,
     institute: participant.institute,
     labAllotted: participant.labAllotted,
     roomNo: participant.roomNo,
