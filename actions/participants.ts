@@ -5,12 +5,6 @@
  *
  * @module actions/participants
  * @description Server actions for participant data operations
- *
- * Best Practices:
- * - All actions are rate-limited
- * - Input validation with Zod
- * - Type-safe responses with discriminated unions
- * - No 'any' types used
  */
 
 import { z } from 'zod';
@@ -28,7 +22,7 @@ import {
   ActionResult,
   createErrorResponse,
 } from '@/lib/types';
-import { actionRateLimiter } from '@/lib/rate-limiter';
+import { checkRateLimit, RateLimitPresets } from '@/lib/rate-limiter';
 
 // ============================================================================
 // Rate Limiting Helper
@@ -51,20 +45,18 @@ async function getRateLimitIdentifier(): Promise<string> {
 export async function getParticipantByIdAction(
   participantId: string
 ): Promise<ActionResult<ClientParticipant>> {
-  // Rate limiting
   const identifier = await getRateLimitIdentifier();
-  const rateLimitResult = actionRateLimiter.check(identifier);
+  const rateLimitResult = await checkRateLimit(identifier, RateLimitPresets.API);
 
   if (!rateLimitResult.allowed) {
+    const retryAfter = Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000);
     return createErrorResponse(
-      `Rate limit exceeded. Please try again in ${Math.ceil(rateLimitResult.retryAfterMs / 1000)} seconds.`,
+      `Rate limit exceeded. Please try again in ${retryAfter} seconds.`,
       'RATE_LIMITED'
     );
   }
 
-  // Validate input
   const parseResult = z.string().min(1, 'Participant ID is required').safeParse(participantId);
-
   if (!parseResult.success) {
     return createErrorResponse(
       parseResult.error.issues[0]?.message ?? 'Invalid participant ID',
@@ -74,15 +66,10 @@ export async function getParticipantByIdAction(
 
   try {
     const participant = await getParticipantById(parseResult.data);
-
     if (!participant) {
       return createErrorResponse('Participant not found', 'NOT_FOUND');
     }
-
-    return {
-      success: true,
-      data: toClientParticipant(participant),
-    };
+    return { success: true, data: toClientParticipant(participant) };
   } catch (error) {
     console.error('Error fetching participant by ID:', error);
     return createErrorResponse(
@@ -98,20 +85,18 @@ export async function getParticipantByIdAction(
 export async function getParticipantByEmailAction(
   email: string
 ): Promise<ActionResult<ClientParticipant>> {
-  // Rate limiting
   const identifier = await getRateLimitIdentifier();
-  const rateLimitResult = actionRateLimiter.check(identifier);
+  const rateLimitResult = await checkRateLimit(identifier, RateLimitPresets.API);
 
   if (!rateLimitResult.allowed) {
+    const retryAfter = Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000);
     return createErrorResponse(
-      `Rate limit exceeded. Please try again in ${Math.ceil(rateLimitResult.retryAfterMs / 1000)} seconds.`,
+      `Rate limit exceeded. Please try again in ${retryAfter} seconds.`,
       'RATE_LIMITED'
     );
   }
 
-  // Validate input
   const parseResult = z.string().email('Invalid email address').safeParse(email);
-
   if (!parseResult.success) {
     return createErrorResponse(
       parseResult.error.issues[0]?.message ?? 'Invalid email',
@@ -121,15 +106,10 @@ export async function getParticipantByEmailAction(
 
   try {
     const participant = await getParticipantByEmail(parseResult.data);
-
     if (!participant) {
       return createErrorResponse('Participant not found', 'NOT_FOUND');
     }
-
-    return {
-      success: true,
-      data: toClientParticipant(participant),
-    };
+    return { success: true, data: toClientParticipant(participant) };
   } catch (error) {
     console.error('Error fetching participant by email:', error);
     return createErrorResponse(
@@ -145,32 +125,24 @@ export async function getParticipantByEmailAction(
 export async function getParticipantsAction(
   limit = 50
 ): Promise<ActionResult<{ participants: ClientParticipant[]; count: number }>> {
-  // Rate limiting
   const identifier = await getRateLimitIdentifier();
-  const rateLimitResult = actionRateLimiter.check(identifier);
+  const rateLimitResult = await checkRateLimit(identifier, RateLimitPresets.READ);
 
   if (!rateLimitResult.allowed) {
+    const retryAfter = Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000);
     return createErrorResponse(
-      `Rate limit exceeded. Please try again in ${Math.ceil(rateLimitResult.retryAfterMs / 1000)} seconds.`,
+      `Rate limit exceeded. Please try again in ${retryAfter} seconds.`,
       'RATE_LIMITED'
     );
   }
 
-  // Validate limit
   const parseResult = z.number().min(1).max(100).safeParse(limit);
   const validLimit = parseResult.success ? parseResult.data : 50;
 
   try {
     const dbParticipants = await getAllParticipants(validLimit);
     const participants = dbParticipants.map(toClientParticipant);
-
-    return {
-      success: true,
-      data: {
-        participants,
-        count: participants.length,
-      },
-    };
+    return { success: true, data: { participants, count: participants.length } };
   } catch (error) {
     console.error('Error fetching participants:', error);
     return createErrorResponse(
@@ -180,9 +152,6 @@ export async function getParticipantsAction(
   }
 }
 
-/**
- * Input schema for paginated participants
- */
 const PaginationInputSchema = z.object({
   page: z.number().min(1).default(1),
   pageSize: z.number().min(1).max(100).default(20),
@@ -195,28 +164,24 @@ type PaginationInput = z.infer<typeof PaginationInputSchema>;
  */
 export async function getParticipantsPaginatedAction(
   input: PaginationInput
-): Promise<
-  ActionResult<{
-    participants: ClientParticipant[];
-    total: number;
-    pages: number;
-    currentPage: number;
-  }>
-> {
-  // Rate limiting
+): Promise<ActionResult<{
+  participants: ClientParticipant[];
+  total: number;
+  pages: number;
+  currentPage: number;
+}>> {
   const identifier = await getRateLimitIdentifier();
-  const rateLimitResult = actionRateLimiter.check(identifier);
+  const rateLimitResult = await checkRateLimit(identifier, RateLimitPresets.READ);
 
   if (!rateLimitResult.allowed) {
+    const retryAfter = Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000);
     return createErrorResponse(
-      `Rate limit exceeded. Please try again in ${Math.ceil(rateLimitResult.retryAfterMs / 1000)} seconds.`,
+      `Rate limit exceeded. Please try again in ${retryAfter} seconds.`,
       'RATE_LIMITED'
     );
   }
 
-  // Validate input
   const parseResult = PaginationInputSchema.safeParse(input);
-
   if (!parseResult.success) {
     return createErrorResponse(
       parseResult.error.issues[0]?.message ?? 'Invalid pagination parameters',
@@ -228,14 +193,7 @@ export async function getParticipantsPaginatedAction(
 
   try {
     const result = await getParticipantsPaginated(page, pageSize);
-
-    return {
-      success: true,
-      data: {
-        ...result,
-        currentPage: page,
-      },
-    };
+    return { success: true, data: { ...result, currentPage: page } };
   } catch (error) {
     console.error('Error fetching paginated participants:', error);
     return createErrorResponse(
@@ -249,24 +207,20 @@ export async function getParticipantsPaginatedAction(
  * Get total participant count
  */
 export async function getParticipantCountAction(): Promise<ActionResult<number>> {
-  // Rate limiting
   const identifier = await getRateLimitIdentifier();
-  const rateLimitResult = actionRateLimiter.check(identifier);
+  const rateLimitResult = await checkRateLimit(identifier, RateLimitPresets.READ);
 
   if (!rateLimitResult.allowed) {
+    const retryAfter = Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000);
     return createErrorResponse(
-      `Rate limit exceeded. Please try again in ${Math.ceil(rateLimitResult.retryAfterMs / 1000)} seconds.`,
+      `Rate limit exceeded. Please try again in ${retryAfter} seconds.`,
       'RATE_LIMITED'
     );
   }
 
   try {
     const count = await countParticipants();
-
-    return {
-      success: true,
-      data: count,
-    };
+    return { success: true, data: count };
   } catch (error) {
     console.error('Error counting participants:', error);
     return createErrorResponse(

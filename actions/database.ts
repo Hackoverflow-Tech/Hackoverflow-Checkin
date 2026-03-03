@@ -10,7 +10,7 @@
 import { headers } from 'next/headers';
 import { getDatabase, getDatabaseName } from '@/lib/db';
 import { ActionResult, createErrorResponse } from '@/lib/types';
-import { dbRateLimiter } from '@/lib/rate-limiter';
+import { checkRateLimit, RateLimitPresets } from '@/lib/rate-limiter';
 
 // ============================================================================
 // Types
@@ -44,25 +44,21 @@ async function getRateLimitIdentifier(): Promise<string> {
 export async function checkDatabaseConnectionAction(): Promise<
   ActionResult<ConnectionStatusData>
 > {
-  // Rate limiting
   const identifier = await getRateLimitIdentifier();
-  const rateLimitResult = dbRateLimiter.check(identifier);
+  const rateLimitResult = await checkRateLimit(identifier, RateLimitPresets.API);
 
   if (!rateLimitResult.allowed) {
+    const retryAfter = Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000);
     return createErrorResponse(
-      `Rate limit exceeded. Please try again in ${Math.ceil(rateLimitResult.retryAfterMs / 1000)} seconds.`,
+      `Rate limit exceeded. Please try again in ${retryAfter} seconds.`,
       'RATE_LIMITED'
     );
   }
 
   try {
     const db = await getDatabase();
-
-    // Test connection by getting collection names
     const collectionsInfo = await db.listCollections().toArray();
     const collections = collectionsInfo.map((c) => c.name);
-
-    // Count participants
     const participantCount = await db.collection('participants').countDocuments();
 
     return {
@@ -89,13 +85,13 @@ export async function checkDatabaseConnectionAction(): Promise<
 export async function getDatabaseHealthAction(): Promise<
   ActionResult<{ healthy: boolean; latencyMs: number }>
 > {
-  // Rate limiting
   const identifier = await getRateLimitIdentifier();
-  const rateLimitResult = dbRateLimiter.check(identifier);
+  const rateLimitResult = await checkRateLimit(identifier, RateLimitPresets.API);
 
   if (!rateLimitResult.allowed) {
+    const retryAfter = Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000);
     return createErrorResponse(
-      `Rate limit exceeded. Please try again in ${Math.ceil(rateLimitResult.retryAfterMs / 1000)} seconds.`,
+      `Rate limit exceeded. Please try again in ${retryAfter} seconds.`,
       'RATE_LIMITED'
     );
   }
@@ -103,18 +99,12 @@ export async function getDatabaseHealthAction(): Promise<
   try {
     const startTime = Date.now();
     const db = await getDatabase();
-
-    // Simple ping-like operation
     await db.command({ ping: 1 });
-
     const latencyMs = Date.now() - startTime;
 
     return {
       success: true,
-      data: {
-        healthy: true,
-        latencyMs,
-      },
+      data: { healthy: true, latencyMs },
     };
   } catch (error) {
     console.error('Database health check error:', error);

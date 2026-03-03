@@ -27,15 +27,12 @@ import {
   ActionResult,
   createErrorResponse,
 } from '@/lib/types';
-import { checkInRateLimiter } from '@/lib/rate-limiter';
+import { checkRateLimit, RateLimitPresets } from '@/lib/rate-limiter';
 
 // ============================================================================
 // Input Schemas
 // ============================================================================
 
-/**
- * Check-in input validation schema
- */
 const CheckInInputSchema = z
   .object({
     email: z.string().email().optional(),
@@ -46,9 +43,6 @@ const CheckInInputSchema = z
     message: 'Either email or participantId is required',
   });
 
-/**
- * Reset check-in input schema
- */
 const ResetCheckInInputSchema = z.object({
   participantId: z.string().min(1, 'Participant ID is required'),
   checkInType: CheckInTypeSchema,
@@ -89,11 +83,12 @@ export async function checkInAction(
 ): Promise<ActionResult<CheckInSuccessData>> {
   // Rate limiting (stricter for check-in)
   const identifier = await getRateLimitIdentifier();
-  const rateLimitResult = checkInRateLimiter.check(identifier);
+  const rateLimitResult = await checkRateLimit(identifier, RateLimitPresets.API);
 
   if (!rateLimitResult.allowed) {
+    const retryAfter = Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000);
     return createErrorResponse(
-      `Rate limit exceeded. Please try again in ${Math.ceil(rateLimitResult.retryAfterMs / 1000)} seconds.`,
+      `Rate limit exceeded. Please try again in ${retryAfter} seconds.`,
       'RATE_LIMITED'
     );
   }
@@ -142,10 +137,8 @@ export async function checkInAction(
       return createErrorResponse('Failed to update check-in status', 'DB_ERROR');
     }
 
-    // Return updated participant data
     const checkInTime = new Date().toISOString();
 
-    // Update the participant object to reflect the check-in
     const updatedParticipant = {
       ...participant,
       [checkInType]: {
@@ -179,11 +172,12 @@ export async function resetCheckInAction(
 ): Promise<ActionResult<ClientParticipant>> {
   // Rate limiting
   const identifier = await getRateLimitIdentifier();
-  const rateLimitResult = checkInRateLimiter.check(identifier);
+  const rateLimitResult = await checkRateLimit(identifier, RateLimitPresets.API);
 
   if (!rateLimitResult.allowed) {
+    const retryAfter = Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000);
     return createErrorResponse(
-      `Rate limit exceeded. Please try again in ${Math.ceil(rateLimitResult.retryAfterMs / 1000)} seconds.`,
+      `Rate limit exceeded. Please try again in ${retryAfter} seconds.`,
       'RATE_LIMITED'
     );
   }
@@ -213,7 +207,6 @@ export async function resetCheckInAction(
       return createErrorResponse('Failed to reset check-in status', 'DB_ERROR');
     }
 
-    // Update the participant object to reflect the reset
     const updatedParticipant = {
       ...participant,
       [checkInType]: {
@@ -269,11 +262,12 @@ export async function manualCheckInAction(
 ): Promise<ActionResult<CheckInSuccessData>> {
   // Rate limiting
   const identifier = await getRateLimitIdentifier();
-  const rateLimitResult = checkInRateLimiter.check(identifier);
+  const rateLimitResult = await checkRateLimit(identifier, RateLimitPresets.API);
 
   if (!rateLimitResult.allowed) {
+    const retryAfter = Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000);
     return createErrorResponse(
-      `Rate limit exceeded. Please try again in ${Math.ceil(rateLimitResult.retryAfterMs / 1000)} seconds.`,
+      `Rate limit exceeded. Please try again in ${retryAfter} seconds.`,
       'RATE_LIMITED'
     );
   }

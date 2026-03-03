@@ -4,15 +4,20 @@
  * Auth Server Actions
  *
  * @module actions/auth
- * @description Login / logout / session helpers using iron-session
+ * @description Login / logout / session helpers using JWT (hackoverflow_session cookie)
  */
 
 import { cookies } from 'next/headers';
-import { getIronSession } from 'iron-session';
 import { z } from 'zod';
 import { getParticipantById } from '@/lib/db';
-import { sessionOptions, type ParticipantSession } from '@/lib/session';
-import { actionRateLimiter } from '@/lib/rate-limiter';
+import {
+    generateToken,
+    verifyToken,
+    JWT_CONFIG,
+    getSecureCookieOptions,
+    getClearCookieOptions,
+} from '@/lib/auth';
+import { checkRateLimit, RateLimitPresets } from '@/lib/rate-limiter';
 import type { ActionResult } from '@/lib/types';
 
 // ============================================================================
@@ -25,20 +30,32 @@ const LoginSchema = z.object({
 });
 
 // ============================================================================
+// Helpers
+// ============================================================================
+
+async function getRateLimitIdentifier(): Promise<string> {
+    const { headers } = await import('next/headers');
+    const headersList = await headers();
+    return (
+        headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+        headersList.get('x-real-ip') ??
+        'anonymous'
+    );
+}
+
+// ============================================================================
 // Actions
 // ============================================================================
 
 /**
- * Login a participant using their participantId + loginPassword from the DB.
- * The DB stores the plain-text password that participants set during registration.
+ * Login a participant and issue a JWT cookie.
  */
 export async function loginParticipantAction(
     participantId: string,
     password: string
 ): Promise<ActionResult<{ participantId: string }>> {
-    // Rate limit by participantId (5 attempts per minute)
-    const loginRateLimiter = actionRateLimiter;
-    const rateLimitResult = loginRateLimiter.check(`login:${participantId}`);
+    // Rate limit by participantId
+    const rateLimitResult = await checkRateLimit(`login:${participantId}`, RateLimitPresets.LOGIN);
     if (!rateLimitResult.allowed) {
         return {
             success: false,
@@ -70,7 +87,6 @@ export async function loginParticipantAction(
     }
 
     if (!participant) {
-        // Generic message to avoid user enumeration
         return {
             success: false,
             error: 'Invalid ID or password.',
@@ -78,7 +94,6 @@ export async function loginParticipantAction(
         };
     }
 
-    // Check that a password exists in DB
     if (!participant.loginPassword) {
         return {
             success: false,
@@ -97,15 +112,15 @@ export async function loginParticipantAction(
         };
     }
 
-    // Create session
-    const session = await getIronSession<ParticipantSession>(
-        await cookies(),
-        sessionOptions
-    );
-    session.participantId = participant.participantId;
-    session.name = participant.name;
-    session.isLoggedIn = true;
-    await session.save();
+    // Generate JWT and set cookie
+    const token = generateToken({
+        userId: participant.participantId,
+        email: participant.email,
+        name: participant.name,
+        role: 'participant',
+    });
+
+    (await cookies()).set(JWT_CONFIG.COOKIE_NAME, token, getSecureCookieOptions());
 
     return {
         success: true,
@@ -114,28 +129,27 @@ export async function loginParticipantAction(
 }
 
 /**
- * Destroy the current session (logout).
+ * Logout by clearing the auth cookie.
  */
 export async function logoutAction(): Promise<void> {
-    const session = await getIronSession<ParticipantSession>(
-        await cookies(),
-        sessionOptions
-    );
-    session.destroy();
+    (await cookies()).set(JWT_CONFIG.COOKIE_NAME, '', getClearCookieOptions());
 }
 
 /**
- * Return the active session, or null if not logged in.
+ * Return the active session data from the JWT cookie, or null if not logged in.
  */
-export async function getSessionAction(): Promise<ParticipantSession | null> {
-    const session = await getIronSession<ParticipantSession>(
-        await cookies(),
-        sessionOptions
-    );
-    if (!session.isLoggedIn) return null;
+export async function getSessionAction() {
+    const token = (await cookies()).get(JWT_CONFIG.COOKIE_NAME)?.value;
+    if (!token) return null;
+
+    const result = verifyToken(token);
+    if (!result.valid) return null;
+
     return {
-        participantId: session.participantId,
-        name: session.name,
-        isLoggedIn: session.isLoggedIn,
+        participantId: result.payload.userId,
+        name: result.payload.name ?? '',
+        email: result.payload.email,
+        role: result.payload.role,
+        isLoggedIn: true,
     };
 }
