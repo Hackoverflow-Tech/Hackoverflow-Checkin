@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { getParticipantByIdAction, collegeCheckInAction } from "@/actions";
 import type { ClientParticipant } from "@/lib/types";
 import Image from "next/image";
@@ -9,7 +9,6 @@ import Link from "next/link";
 
 export default function ParticipantCheckInClient() {
     const { participantId } = useParams() as { participantId: string };
-    const router = useRouter();
     const [participant, setParticipant] = useState<ClientParticipant | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);

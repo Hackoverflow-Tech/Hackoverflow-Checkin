@@ -57,11 +57,9 @@ const MONGODB_OPTIONS = {
 
 // Global type declaration for development caching
 declare global {
-  // eslint-disable-next-line no-var
   var _mongoClientPromise: Promise<MongoClient> | undefined;
 }
 
-let clientPromise: Promise<MongoClient>;
 let cachedDbName: string;
 
 /**
@@ -87,7 +85,7 @@ function initializeClient(): Promise<MongoClient> {
 }
 
 // Initialize on module load
-clientPromise = initializeClient();
+const clientPromise: Promise<MongoClient> = initializeClient();
 
 // ============================================================================
 // Exports

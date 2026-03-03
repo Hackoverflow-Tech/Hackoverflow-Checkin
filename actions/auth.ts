@@ -30,20 +30,6 @@ const LoginSchema = z.object({
 });
 
 // ============================================================================
-// Helpers
-// ============================================================================
-
-async function getRateLimitIdentifier(): Promise<string> {
-    const { headers } = await import('next/headers');
-    const headersList = await headers();
-    return (
-        headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-        headersList.get('x-real-ip') ??
-        'anonymous'
-    );
-}
-
-// ============================================================================
 // Actions
 // ============================================================================
 

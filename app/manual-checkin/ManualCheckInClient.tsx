@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { manualCheckInAction } from "@/actions";
+import { type ClientParticipant } from "@/lib/validation";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -10,7 +11,7 @@ export default function ManualCheckInClient() {
     const [teamId, setTeamId] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
-    const [participant, setParticipant] = useState<any>(null);
+    const [participant, setParticipant] = useState<ClientParticipant | null>(null);
     const [isPending, startTransition] = useTransition();
 
     const handleSubmit = async (e: React.FormEvent) => {
