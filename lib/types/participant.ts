@@ -233,8 +233,8 @@ export function toClientParticipant(participant: DBParticipant): ClientParticipa
         status: participant.tempLabCheckOut.status,
         time: participant.tempLabCheckOut.time?.toISOString(),
       }
+      : undefined,
 
-    // <--- ADDED THIS MEAL STATUS MAPPING --->
     mealStatus: participant.mealStatus
       ? {
         day1_dinner: mapMealSlot(participant.mealStatus.day1_dinner),
