@@ -292,9 +292,13 @@ export async function tempLabCheckOutAction(
       const updated = await resetCheckIn(participantId, 'tempLabCheckOut');
       if (!updated) return createErrorResponse('Failed to update status', 'DB_ERROR');
 
+      // Refresh the Lab Entry time to the current moment
+      await updateCheckIn(participantId, 'labCheckIn');
+
       const updatedParticipant = {
         ...participant,
-        tempLabCheckOut: { status: false }
+        tempLabCheckOut: { status: false },
+        labCheckIn: { status: true, time: new Date() }
       };
 
       return {

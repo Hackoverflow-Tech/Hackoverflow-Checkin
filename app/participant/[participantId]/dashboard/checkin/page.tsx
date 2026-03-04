@@ -126,9 +126,19 @@ export default function CheckInDashboardPage() {
                         </button>
                     ) : (
                         <div className="space-y-4">
-                            <p className="text-gray-400 text-xs font-mono">
-                                Last In: {new Date(participant.labCheckIn!.time!).toLocaleString()}
-                            </p>
+                            <div className="space-y-1">
+                                <p className="text-gray-400 text-xs font-mono">
+                                    {tempOut
+                                        ? `Out since: ${new Date(participant.tempLabCheckOut!.time!).toLocaleString()}`
+                                        : `Last In: ${new Date(participant.labCheckIn!.time!).toLocaleString()}`
+                                    }
+                                </p>
+                                {labOut && participant.labCheckOut?.time && (
+                                    <p className="text-gray-400 text-xs font-mono">
+                                        Last Out: {new Date(participant.labCheckOut.time).toLocaleString()}
+                                    </p>
+                                )}
+                            </div>
 
                             {!labOut && (
                                 <div className="grid grid-cols-2 gap-3">
@@ -137,7 +147,7 @@ export default function CheckInDashboardPage() {
                                         disabled={isPending}
                                         className={`font-bold py-2 rounded-xl text-sm transition-all disabled:opacity-50 ${tempOut ? 'bg-orange-500 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
                                     >
-                                        {tempOut ? "Back in Lab?" : "Temp Exit"}
+                                        {tempOut ? "Click to Enter →" : "Temp Exit"}
                                     </button>
                                     <button
                                         onClick={() => handleAction(labCheckOutAction)}
@@ -150,7 +160,9 @@ export default function CheckInDashboardPage() {
                             )}
 
                             {labOut && (
-                                <p className="text-gray-400 text-xs">Lab Session Completed</p>
+                                <div className="pt-2 border-t border-white/5">
+                                    <p className="text-gray-400 text-xs font-bold uppercase tracking-widest text-center">Session Completed</p>
+                                </div>
                             )}
                         </div>
                     )}
