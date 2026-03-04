@@ -23,4 +23,6 @@ export {
   resetCheckIn,
   participantExists,
   getCollectionInfo,
+  updateMealStatus,
+  getParticipantsByTeamId, // <--- THIS FIXES THE TERMINAL ERROR
 } from './participants';

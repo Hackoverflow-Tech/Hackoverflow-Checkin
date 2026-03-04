@@ -14,6 +14,7 @@ export {
   ClientParticipantSchema,
   CheckInTypeSchema,
   CheckInInputSchema,
+  MealStatusSchema,
   // Types
   type WifiCredentials,
   type CheckInStatus,
@@ -21,6 +22,7 @@ export {
   type ClientParticipant,
   type CheckInType,
   type CheckInInput,
+  type MealStatus, // <--- THIS FIXES THE MEALSTATUS ERROR
   // Utilities
   toClientParticipant,
 } from './participant';

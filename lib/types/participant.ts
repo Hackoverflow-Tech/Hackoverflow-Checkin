@@ -29,6 +29,23 @@ export const CheckInStatusSchema = z.object({
 });
 
 /**
+ * NEW: Meal Slot Schemas for Database (uses Date)
+ */
+export const MealSlotSchema = z.object({
+  status: z.boolean().default(false),
+  time: z.date().nullable().optional(),
+});
+
+export const MealStatusSchema = z.object({
+  day1_dinner: MealSlotSchema.optional(),
+  day2_breakfast: MealSlotSchema.optional(),
+  day2_lunch: MealSlotSchema.optional(),
+  day2_dinner: MealSlotSchema.optional(),
+  day3_breakfast: MealSlotSchema.optional(),
+  day3_lunch: MealSlotSchema.optional(),
+});
+
+/**
  * Database participant schema - represents a participant document in MongoDB
  */
 export const DBParticipantSchema = z.object({
@@ -50,8 +67,26 @@ export const DBParticipantSchema = z.object({
   collegeCheckOut: CheckInStatusSchema.optional(),
   labCheckOut: CheckInStatusSchema.optional(),
   tempLabCheckOut: CheckInStatusSchema.optional(),
+  mealStatus: MealStatusSchema.optional(), // <--- ADDED THIS LINE
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
+});
+
+/**
+ * NEW: Client-safe Meal Slot Schemas (converts Date to string)
+ */
+export const ClientMealSlotSchema = z.object({
+  status: z.boolean().default(false),
+  time: z.string().nullable().optional(),
+});
+
+export const ClientMealStatusSchema = z.object({
+  day1_dinner: ClientMealSlotSchema.optional(),
+  day2_breakfast: ClientMealSlotSchema.optional(),
+  day2_lunch: ClientMealSlotSchema.optional(),
+  day2_dinner: ClientMealSlotSchema.optional(),
+  day3_breakfast: ClientMealSlotSchema.optional(),
+  day3_lunch: ClientMealSlotSchema.optional(),
 });
 
 /**
@@ -99,6 +134,7 @@ export const ClientParticipantSchema = z.object({
       time: z.string().optional(),
     })
     .optional(),
+  mealStatus: ClientMealStatusSchema.optional(), // <--- ADDED THIS LINE
 });
 
 /**
@@ -136,10 +172,20 @@ export type DBParticipant = z.infer<typeof DBParticipantSchema>;
 export type ClientParticipant = z.infer<typeof ClientParticipantSchema>;
 export type CheckInType = z.infer<typeof CheckInTypeSchema>;
 export type CheckInInput = z.infer<typeof CheckInInputSchema>;
+export type MealStatus = z.infer<typeof MealStatusSchema>; // <--- ADDED THIS LINE
 
 // ============================================================================
 // Utility Functions
 // ============================================================================
+
+// NEW HELPER: Safely converts a DB Meal Slot (Date) to a Client Meal Slot (String)
+function mapMealSlot(slot?: z.infer<typeof MealSlotSchema>) {
+  if (!slot) return undefined;
+  return {
+    status: slot.status,
+    time: slot.time ? slot.time.toISOString() : undefined,
+  };
+}
 
 /**
  * Transforms a database participant to a client-safe participant
@@ -186,6 +232,17 @@ export function toClientParticipant(participant: DBParticipant): ClientParticipa
       ? {
         status: participant.tempLabCheckOut.status,
         time: participant.tempLabCheckOut.time?.toISOString(),
+      }
+
+    // <--- ADDED THIS MEAL STATUS MAPPING --->
+    mealStatus: participant.mealStatus
+      ? {
+        day1_dinner: mapMealSlot(participant.mealStatus.day1_dinner),
+        day2_breakfast: mapMealSlot(participant.mealStatus.day2_breakfast),
+        day2_lunch: mapMealSlot(participant.mealStatus.day2_lunch),
+        day2_dinner: mapMealSlot(participant.mealStatus.day2_dinner),
+        day3_breakfast: mapMealSlot(participant.mealStatus.day3_breakfast),
+        day3_lunch: mapMealSlot(participant.mealStatus.day3_lunch),
       }
       : undefined,
   };

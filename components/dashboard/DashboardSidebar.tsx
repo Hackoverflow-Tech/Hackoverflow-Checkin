@@ -17,6 +17,7 @@ const NAV_ITEMS = [
     { label: "Schedule", href: "schedule", icon: "📅" },
     { label: "Team", href: "team", icon: "👥" },
     { label: "Resources", href: "resources", icon: "📡" },
+    { label: "Food", href: "food", icon: "🍔" },
 ];
 
 export default function DashboardSidebar({ participantId, participantName }: Props) {
