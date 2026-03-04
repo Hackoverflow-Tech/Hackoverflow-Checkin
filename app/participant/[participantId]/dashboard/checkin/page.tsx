@@ -44,6 +44,12 @@ export default function CheckInDashboardPage() {
         });
     };
 
+    const handlePermanentAction = (actionFn: (id: string) => Promise<any>, message: string) => {
+        if (window.confirm(message)) {
+            handleAction(actionFn);
+        }
+    };
+
     if (loading) {
         return (
             <div className="animate-pulse space-y-6">
@@ -71,10 +77,10 @@ export default function CheckInDashboardPage() {
                 <div className={`rounded-3xl p-8 border transition-all duration-300 ${collegeIn ? 'bg-green-500/10 border-green-500/20' : 'bg-white/5 border-white/10'}`}>
                     <div className="flex justify-between items-start mb-6">
                         <div>
-                            <h2 className="text-xl font-bold text-white">College Check-in</h2>
-                            <p className="text-gray-400 text-sm mt-1">Initial arrival at the venue</p>
+                            <h2 className="text-xl font-bold text-white">Event Attendance</h2>
+                            <p className="text-gray-400 text-sm mt-1">College-wide tracking</p>
                         </div>
-                        {collegeIn && <span className="text-green-500 bg-green-500/10 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Confirmed</span>}
+                        {collegeIn && <span className="text-green-500 bg-green-500/10 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Checked In</span>}
                     </div>
 
                     {!collegeIn ? (
@@ -88,18 +94,18 @@ export default function CheckInDashboardPage() {
                     ) : (
                         <div className="space-y-4">
                             <p className="text-gray-400 text-xs font-mono">
-                                Time: {new Date(participant.collegeCheckIn!.time!).toLocaleString()}
+                                In: {new Date(participant.collegeCheckIn!.time!).toLocaleString()}
                             </p>
                             {!collegeOut ? (
                                 <button
-                                    onClick={() => handleAction(collegeCheckOutAction)}
-                                    disabled={isPending}
-                                    className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 font-bold py-2 rounded-xl text-sm transition-all disabled:opacity-50"
+                                    onClick={() => handlePermanentAction(collegeCheckOutAction, "Are you sure you want to permanently check-out from the event? This action is final.")}
+                                    disabled={isPending || !labOut}
+                                    className={`w-full font-bold py-2 rounded-xl text-sm transition-all disabled:opacity-50 ${labOut ? 'bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20' : 'bg-white/5 text-gray-500 cursor-not-allowed opacity-50'}`}
                                 >
-                                    Event Check-out
+                                    {labOut ? "Final Event Check-out" : "Checkout Locked (finish Lab Exit first)"}
                                 </button>
                             ) : (
-                                <p className="text-red-400 text-xs font-bold uppercase tracking-widest">Permanent Check-out Complete</p>
+                                <p className="text-red-400 text-xs font-bold uppercase tracking-widest text-center py-2 bg-red-500/5 rounded-lg border border-red-500/10">Permanently Checked Out</p>
                             )}
                         </div>
                     )}
@@ -109,11 +115,11 @@ export default function CheckInDashboardPage() {
                 <div className={`rounded-3xl p-8 border transition-all duration-300 ${labIn && !labOut ? 'bg-blue-500/10 border-blue-500/20' : 'bg-white/5 border-white/10'} ${!collegeIn && 'opacity-50 pointer-events-none'}`}>
                     <div className="flex justify-between items-start mb-6">
                         <div>
-                            <h2 className="text-xl font-bold text-white">Lab Check-in</h2>
-                            <p className="text-gray-400 text-sm mt-1">Movement tracking at {participant?.labAllotted || "Allotted Lab"}</p>
+                            <h2 className="text-xl font-bold text-white">Lab Workspace</h2>
+                            <p className="text-gray-400 text-sm mt-1">Area: {participant?.labAllotted || "Assigned Lab"}</p>
                         </div>
                         {labIn && !labOut && <span className="text-blue-500 bg-blue-500/10 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">In Lab</span>}
-                        {labOut && <span className="text-gray-400 bg-white/5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Checked Out</span>}
+                        {labOut && <span className="text-gray-400 bg-white/5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Session Ended</span>}
                     </div>
 
                     {!labIn ? (
@@ -147,10 +153,10 @@ export default function CheckInDashboardPage() {
                                         disabled={isPending}
                                         className={`font-bold py-2 rounded-xl text-sm transition-all disabled:opacity-50 ${tempOut ? 'bg-orange-500 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
                                     >
-                                        {tempOut ? "Click to Enter →" : "Temp Exit"}
+                                        {tempOut ? "Mark: I'm Back →" : "Temporary Exit"}
                                     </button>
                                     <button
-                                        onClick={() => handleAction(labCheckOutAction)}
+                                        onClick={() => handlePermanentAction(labCheckOutAction, "Are you sure you want to end your lab session permanently? You cannot re-enter the lab system after this.")}
                                         disabled={isPending}
                                         className="bg-white/5 hover:bg-white/10 text-gray-400 font-bold py-2 rounded-xl text-sm transition-all disabled:opacity-50"
                                     >
@@ -161,7 +167,7 @@ export default function CheckInDashboardPage() {
 
                             {labOut && (
                                 <div className="pt-2 border-t border-white/5">
-                                    <p className="text-gray-400 text-xs font-bold uppercase tracking-widest text-center">Session Completed</p>
+                                    <p className="text-gray-400 text-xs font-bold uppercase tracking-widest text-center">Lab Checkout Complete</p>
                                 </div>
                             )}
                         </div>

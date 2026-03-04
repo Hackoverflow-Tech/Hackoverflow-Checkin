@@ -255,14 +255,29 @@ export async function labCheckInAction(
 
 /**
  * Quick college check-out by participant ID
+ * Requires labCheckOut to be completed first.
  */
 export async function collegeCheckOutAction(
   participantId: string
 ): Promise<ActionResult<CheckInSuccessData>> {
-  return checkInAction({
-    participantId,
-    checkInType: 'collegeCheckOut',
-  });
+  try {
+    const participant = await getParticipantById(participantId);
+    if (!participant) return createErrorResponse('Participant not found', 'NOT_FOUND');
+
+    if (!participant.labCheckOut?.status) {
+      return createErrorResponse(
+        'You must complete your Lab Exit before checking out from the event.',
+        'VALIDATION_ERROR'
+      );
+    }
+
+    return checkInAction({
+      participantId,
+      checkInType: 'collegeCheckOut',
+    });
+  } catch (error) {
+    return createErrorResponse('Failed to perform event check-out', 'DB_ERROR');
+  }
 }
 
 /**
