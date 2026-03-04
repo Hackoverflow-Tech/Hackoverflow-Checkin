@@ -25,7 +25,7 @@ export const WifiCredentialsSchema = z.object({
  */
 export const CheckInStatusSchema = z.object({
   status: z.boolean(),
-  time: z.date().optional(),
+  time: z.date().nullable().optional(),
 });
 
 /**
