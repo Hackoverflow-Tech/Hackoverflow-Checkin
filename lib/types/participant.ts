@@ -47,6 +47,9 @@ export const DBParticipantSchema = z.object({
   wifiCredentials: WifiCredentialsSchema.optional(),
   collegeCheckIn: CheckInStatusSchema.optional(),
   labCheckIn: CheckInStatusSchema.optional(),
+  collegeCheckOut: CheckInStatusSchema.optional(),
+  labCheckOut: CheckInStatusSchema.optional(),
+  tempLabCheckOut: CheckInStatusSchema.optional(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
 });
@@ -78,12 +81,36 @@ export const ClientParticipantSchema = z.object({
       time: z.string().optional(),
     })
     .optional(),
+  collegeCheckOut: z
+    .object({
+      status: z.boolean(),
+      time: z.string().optional(),
+    })
+    .optional(),
+  labCheckOut: z
+    .object({
+      status: z.boolean(),
+      time: z.string().optional(),
+    })
+    .optional(),
+  tempLabCheckOut: z
+    .object({
+      status: z.boolean(),
+      time: z.string().optional(),
+    })
+    .optional(),
 });
 
 /**
  * Check-in type enum schema
  */
-export const CheckInTypeSchema = z.enum(['collegeCheckIn', 'labCheckIn']);
+export const CheckInTypeSchema = z.enum([
+  'collegeCheckIn',
+  'labCheckIn',
+  'collegeCheckOut',
+  'labCheckOut',
+  'tempLabCheckOut'
+]);
 
 /**
  * Check-in request input schema
@@ -141,6 +168,24 @@ export function toClientParticipant(participant: DBParticipant): ClientParticipa
       ? {
         status: participant.labCheckIn.status,
         time: participant.labCheckIn.time?.toISOString(),
+      }
+      : undefined,
+    collegeCheckOut: participant.collegeCheckOut
+      ? {
+        status: participant.collegeCheckOut.status,
+        time: participant.collegeCheckOut.time?.toISOString(),
+      }
+      : undefined,
+    labCheckOut: participant.labCheckOut
+      ? {
+        status: participant.labCheckOut.status,
+        time: participant.labCheckOut.time?.toISOString(),
+      }
+      : undefined,
+    tempLabCheckOut: participant.tempLabCheckOut
+      ? {
+        status: participant.tempLabCheckOut.status,
+        time: participant.tempLabCheckOut.time?.toISOString(),
       }
       : undefined,
   };
