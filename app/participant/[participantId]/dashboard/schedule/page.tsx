@@ -29,7 +29,9 @@ const SCHEDULE_DATA: ScheduleDay[] = [
         color: '#FCB216',
         icon: '📅',
         events: [
-            { startTime: '11:00 AM', endTime: '02:00 PM', title: 'Banner Revel', description: 'Welcome to Hackoverflow 4.0!', isMeal: false },
+            { startTime: '10:30 AM', endTime: '12:00 PM', title: 'Check-in', description: 'Check-in to the event.', isMeal: false },
+            { startTime: '12:00 PM', endTime: '01:00 PM', title: 'Breakfast', description: 'Grab your meal and refuel.', isMeal: true },
+            { startTime: '01:00 PM', endTime: '02:00 PM', title: 'Banner Revel', description: 'Welcome to Hackoverflow 4.0!', isMeal: false },
             { startTime: '02:00 PM', endTime: '04:00 PM', title: 'Orientation & Opening Ceremony', description: 'Official kickoff at the main auditorium.', isMeal: false },
             { startTime: '04:00 PM', endTime: '05:00 PM', title: 'Lab Allotment', description: 'Get assigned to your lab workspace.', isMeal: false },
             { startTime: '05:00 PM', endTime: '09:00 PM', title: 'Hackathon Begins', description: 'The clock starts now!', isMeal: false },
@@ -46,9 +48,9 @@ const SCHEDULE_DATA: ScheduleDay[] = [
             { startTime: '08:00 AM', endTime: '09:00 AM', title: 'Breakfast', description: 'Energy up before the day begins.', isMeal: true },
             { startTime: '09:00 AM', endTime: '01:00 PM', title: 'Coding [Judging round 1]', description: 'First assessment round begins.', isMeal: false },
             { startTime: '01:00 PM', endTime: '02:00 PM', title: 'Lunch', description: 'Take a break and enjoy your meal.', isMeal: true },
-            { startTime: '02:00 PM', endTime: '06:00 PM', title: 'Coding [Judging round 2]', description: 'Second assessment round.', isMeal: false },
-            { startTime: '06:00 PM', endTime: '08:00 PM', title: 'Dinner', description: 'Evening meal break.', isMeal: true },
-            { startTime: '08:00 PM', endTime: '11:00 PM', title: 'Networking & Jamming Session', description: 'Connect with fellow hackers.', isMeal: false },
+            { startTime: '02:00 PM', endTime: '07:00 PM', title: 'Coding [Judging round 2]', description: 'Second assessment round.', isMeal: false },
+            { startTime: '07:00 PM', endTime: '09:00 PM', title: 'Dinner', description: 'Evening meal break.', isMeal: true },
+            { startTime: '09:00 PM', endTime: '11:00 PM', title: 'Networking & Jamming Session', description: 'Connect with fellow hackers.', isMeal: false },
             { startTime: '11:00 PM', endTime: '07:00 AM', title: 'Coding', description: 'Burning midnight oil.', isMeal: false }
         ]
     },
@@ -60,9 +62,9 @@ const SCHEDULE_DATA: ScheduleDay[] = [
         events: [
             { startTime: '07:00 AM', endTime: '08:00 AM', title: 'Project & Code Submission', description: 'Final deadline for submissions.', isMeal: false },
             { startTime: '08:00 AM', endTime: '09:00 AM', title: 'Breakfast', description: 'Last breakfast of the hackathon.', isMeal: true },
-            { startTime: '09:00 AM', endTime: '11:00 AM', title: 'Judging [Assessment 3]', description: 'Final judging round.', isMeal: false },
-            { startTime: '11:30 AM', endTime: '01:00 PM', title: 'Lunch', description: 'Meal break during judging.', isMeal: true },
-            { startTime: '01:00 PM', endTime: '03:00 PM', title: 'Final Evaluation (Conclave)', description: 'Final evaluation of winners.', isMeal: false },
+            { startTime: '09:00 AM', endTime: '12:00 AM', title: 'Judging round 3', description: 'Final judging round.', isMeal: false },
+            { startTime: '12:00 AM', endTime: '01:00 PM', title: 'Lunch', description: 'Meal break during judging.', isMeal: true },
+            { startTime: '01:00 PM', endTime: '03:30 PM', title: 'Final Evaluation (Conclave)', description: 'Final evaluation of winners.', isMeal: false },
             { startTime: '03:30 PM', endTime: '05:00 PM', title: 'Closing Ceremony', description: 'Celebration of achievements.', isMeal: false },
             { startTime: '05:00 PM', endTime: '05:30 PM', title: 'Certificate Distribution', description: 'Collect your certificate.', isMeal: false }
         ]
@@ -211,7 +213,7 @@ const SchedulePage: React.FC = () => {
                                                                 <span className="flex h-1.5 w-1.5 rounded-full bg-current animate-pulse" />
                                                             )}
                                                         </div>
-                                                        <h3 className="font-bold text-sm md:text-base text-white group-hover:translate-x-1 transition-transform">
+                                                        <h3 className="font-bold text-sm md:text-base text-white ">
                                                             {event.title}
                                                         </h3>
                                                         <p className="text-gray-400 text-[10px] md:text-xs leading-relaxed max-w-2xl">
