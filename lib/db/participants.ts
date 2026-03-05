@@ -53,7 +53,10 @@ export async function getAllParticipants(limit?: number): Promise<DBParticipant[
   return participants;
 }
 
-export async function getParticipantsPaginated(page: number, pageSize: number): Promise<{ participants: ClientParticipant[]; total: number; pages: number }> {
+export async function getParticipantsPaginated(
+  page: number,
+  pageSize: number
+): Promise<{ participants: ClientParticipant[]; total: number; pages: number }> {
   const db = await getDatabase();
   const collection = db.collection(COLLECTION_NAME);
   const total = await collection.countDocuments();
@@ -84,36 +87,68 @@ export async function getParticipantsByTeamId(teamId: string): Promise<DBPartici
   return participants;
 }
 
-export async function updateCheckIn(participantId: string, checkInType: CheckInType): Promise<boolean> {
+export async function updateCheckIn(
+  participantId: string,
+  checkInType: CheckInType
+): Promise<boolean> {
   const db = await getDatabase();
   const result = await db.collection(COLLECTION_NAME).updateOne(
     { participantId },
-    { $set: { [`${checkInType}.status`]: true, [`${checkInType}.time`]: new Date(), updatedAt: new Date() } }
+    {
+      $set: {
+        [`${checkInType}.status`]: true,
+        [`${checkInType}.time`]: new Date(),
+        updatedAt: new Date(),
+      },
+    }
   );
   return result.modifiedCount > 0;
 }
 
-export async function resetCheckIn(participantId: string, checkInType: CheckInType): Promise<boolean> {
+export async function resetCheckIn(
+  participantId: string,
+  checkInType: CheckInType
+): Promise<boolean> {
   const db = await getDatabase();
   const result = await db.collection(COLLECTION_NAME).updateOne(
     { participantId },
-    { $set: { [`${checkInType}.status`]: false, [`${checkInType}.time`]: null, updatedAt: new Date() } }
+    {
+      $set: {
+        [`${checkInType}.status`]: false,
+        [`${checkInType}.time`]: null,
+        updatedAt: new Date(),
+      },
+    }
   );
   return result.modifiedCount > 0;
 }
 
-export async function updateMealStatus(participantId: string, mealKey: string): Promise<boolean> {
+/**
+ * Update meal status — writes a simple boolean to meals.${mealKey}
+ * Aligned with admin dashboard MealStatus structure.
+ */
+export async function updateMealStatus(
+  participantId: string,
+  mealKey: string
+): Promise<boolean> {
   const db = await getDatabase();
   const result = await db.collection(COLLECTION_NAME).updateOne(
     { participantId },
-    { $set: { [`mealStatus.${mealKey}.status`]: true, [`mealStatus.${mealKey}.time`]: new Date(), updatedAt: new Date() } }
+    {
+      $set: {
+        [`meals.${mealKey}`]: true,
+        updatedAt: new Date(),
+      },
+    }
   );
   return result.modifiedCount > 0;
 }
 
 export async function participantExists(participantId: string): Promise<boolean> {
   const db = await getDatabase();
-  const count = await db.collection(COLLECTION_NAME).countDocuments({ participantId }, { limit: 1 });
+  const count = await db
+    .collection(COLLECTION_NAME)
+    .countDocuments({ participantId }, { limit: 1 });
   return count > 0;
 }
 

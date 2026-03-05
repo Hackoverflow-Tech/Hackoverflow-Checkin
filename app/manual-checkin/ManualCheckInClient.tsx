@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { manualCheckInAction } from "@/actions";
-import { type ClientParticipant } from "@/lib/validation";
+import { type ClientParticipant } from "@/lib/types";
 import Image from "next/image";
 import Link from "next/link";
 

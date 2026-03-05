@@ -1,34 +1,32 @@
 import { getParticipantByIdAction } from "@/actions/participants";
-import { MEAL_LABELS } from "@/lib/constants"; 
+import { MEAL_LABELS } from "@/lib/constants";
 import MealCard from "./mealcard";
 
-// === HACKATHON MEAL TIMINGS ===
-// IMPORTANT: day2_lunch spans across today's date so you can test the glowing active button!
 const MEAL_SCHEDULE: Record<string, { start: Date; end: Date }> = {
-  day1_dinner: { 
-    start: new Date("2026-03-12T19:00:00"), 
-    end: new Date("2026-03-12T22:30:00") 
+  day1_dinner: {
+    start: new Date("2026-03-12T19:00:00"),
+    end: new Date("2026-03-12T22:30:00"),
   },
-  day2_breakfast: { 
-    start: new Date("2026-03-13T08:00:00"), 
-    end: new Date("2026-03-13T10:30:00") 
+  day2_breakfast: {
+    start: new Date("2026-03-13T08:00:00"),
+    end: new Date("2026-03-13T10:30:00"),
   },
-  // TEST ACTIVE WINDOW: This is set to span across March 4th, 2026 (Today)
-  day2_lunch: { 
-    start: new Date("2026-03-04T10:00:00"), 
-    end: new Date("2026-03-04T16:00:00") 
+  // TEST ACTIVE WINDOW: spans March 4th, 2026
+  day2_lunch: {
+    start: new Date("2026-03-04T10:00:00"),
+    end: new Date("2026-03-04T16:00:00"),
   },
-  day2_dinner: { 
-    start: new Date("2026-03-13T20:00:00"), 
-    end: new Date("2026-03-13T23:00:00") 
+  day2_dinner: {
+    start: new Date("2026-03-13T20:00:00"),
+    end: new Date("2026-03-13T23:00:00"),
   },
-  day3_breakfast: { 
-    start: new Date("2026-03-14T08:00:00"), 
-    end: new Date("2026-03-14T10:30:00") 
+  day3_breakfast: {
+    start: new Date("2026-03-14T08:00:00"),
+    end: new Date("2026-03-14T10:30:00"),
   },
-  day3_lunch: { 
-    start: new Date("2026-03-14T13:00:00"), 
-    end: new Date("2026-03-14T15:00:00") 
+  day3_lunch: {
+    start: new Date("2026-03-14T13:00:00"),
+    end: new Date("2026-03-14T15:00:00"),
   },
 };
 
@@ -42,10 +40,8 @@ export default async function FoodPage({ params }: PageProps) {
 
   const result = await getParticipantByIdAction(participantId);
 
-  // Error Handling without TypeScript complaints
   if (!result.success) {
-    const errorObj = result as any;
-    const errorMsg = errorObj.error?.message || errorObj.error || "Unknown database error";
+    const errorMsg = (result as any).error || "Unknown database error";
     return (
       <div className="p-8 text-white">
         <h1 className="text-red-500 text-2xl font-bold mb-4">Error Loading Data</h1>
@@ -82,15 +78,13 @@ export default async function FoodPage({ params }: PageProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {Object.entries(MEAL_LABELS).map(([mealKey, label]) => {
           const typedMealKey = mealKey as keyof typeof MEAL_LABELS;
-          
-          // Safely grab data, ignoring strict type bindings to avoid red squigglies
-          const mealSlot = (participant.mealStatus as any)?.[typedMealKey];
-          const isAvailed = mealSlot?.status || false;
-          const availedAt = mealSlot?.time || null;
-          
-          const schedule = MEAL_SCHEDULE[mealKey] || { 
-            start: new Date(Date.now() + 86400000), 
-            end: new Date(Date.now() + 172800000) 
+
+          // meals is now a simple boolean field aligned with admin dashboard
+          const isAvailed = participant.meals?.[typedMealKey] ?? false;
+
+          const schedule = MEAL_SCHEDULE[mealKey] ?? {
+            start: new Date(Date.now() + 86400000),
+            end: new Date(Date.now() + 172800000),
           };
 
           return (
@@ -100,7 +94,6 @@ export default async function FoodPage({ params }: PageProps) {
               mealKey={mealKey}
               label={label}
               initialIsAvailed={isAvailed}
-              initialAvailedAt={availedAt}
               startTime={schedule.start}
               endTime={schedule.end}
             />

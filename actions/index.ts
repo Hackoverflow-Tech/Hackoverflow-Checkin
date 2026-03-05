@@ -12,6 +12,8 @@ export {
   getParticipantsAction,
   getParticipantsPaginatedAction,
   getParticipantCountAction,
+  markMealConsumedAction,
+  getTeamMembersAction,
 } from './participants';
 
 // Check-in actions

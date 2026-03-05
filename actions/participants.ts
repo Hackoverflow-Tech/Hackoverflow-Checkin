@@ -4,11 +4,9 @@
  * Participant Server Actions
  *
  * @module actions/participants
- * @description Server actions for participant data operations
+ * @description Server actions for participant data retrieval and meal updates
  */
 
-import { z } from 'zod';
-import { headers } from 'next/headers';
 import {
   getParticipantById,
   getParticipantByEmail,
@@ -25,6 +23,11 @@ import {
   createErrorResponse,
 } from '@/lib/types';
 import { checkRateLimit, RateLimitPresets } from '@/lib/rate-limiter';
+import { headers } from 'next/headers';
+
+// ============================================================================
+// Rate Limiting Helper
+// ============================================================================
 
 async function getRateLimitIdentifier(): Promise<string> {
   const headersList = await headers();
@@ -33,146 +36,205 @@ async function getRateLimitIdentifier(): Promise<string> {
   return forwardedFor?.split(',')[0]?.trim() ?? realIp ?? 'anonymous';
 }
 
-export async function getParticipantByIdAction(participantId: string): Promise<ActionResult<ClientParticipant>> {
+// ============================================================================
+// Server Actions
+// ============================================================================
+
+export async function getParticipantByIdAction(
+  participantId: string
+): Promise<ActionResult<ClientParticipant>> {
   const identifier = await getRateLimitIdentifier();
-  const rateLimitResult = await checkRateLimit(identifier, RateLimitPresets.API);
+  const rateLimitResult = await checkRateLimit(identifier, RateLimitPresets.READ);
   if (!rateLimitResult.allowed) {
-    const retryAfter = Math.max(1, Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000));
-    return createErrorResponse(`Rate limit exceeded. Please try again in ${retryAfter} seconds.`, 'RATE_LIMITED');
+    const retryAfter = Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000);
+    return createErrorResponse(
+      `Rate limit exceeded. Please try again in ${retryAfter} seconds.`,
+      'RATE_LIMITED'
+    );
   }
-  const parseResult = z.string().min(1, 'Participant ID is required').safeParse(participantId);
-  if (!parseResult.success) {
-    return createErrorResponse(parseResult.error.issues[0]?.message ?? 'Invalid participant ID', 'VALIDATION_ERROR');
-  }
+
   try {
-    const participant = await getParticipantById(parseResult.data);
+    const participant = await getParticipantById(participantId);
     if (!participant) return createErrorResponse('Participant not found', 'NOT_FOUND');
     return { success: true, data: toClientParticipant(participant) };
   } catch (error) {
-    console.error('Error fetching participant by ID:', error);
-    return createErrorResponse(error instanceof Error ? error.message : 'Failed to fetch participant', 'DB_ERROR');
+    return createErrorResponse(
+      error instanceof Error ? error.message : 'Failed to fetch participant',
+      'DB_ERROR'
+    );
   }
 }
 
-export async function getParticipantByEmailAction(email: string): Promise<ActionResult<ClientParticipant>> {
+export async function getParticipantByEmailAction(
+  email: string
+): Promise<ActionResult<ClientParticipant>> {
   const identifier = await getRateLimitIdentifier();
-  const rateLimitResult = await checkRateLimit(identifier, RateLimitPresets.API);
+  const rateLimitResult = await checkRateLimit(identifier, RateLimitPresets.READ);
   if (!rateLimitResult.allowed) {
-    const retryAfter = Math.max(1, Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000));
-    return createErrorResponse(`Rate limit exceeded. Please try again in ${retryAfter} seconds.`, 'RATE_LIMITED');
+    const retryAfter = Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000);
+    return createErrorResponse(
+      `Rate limit exceeded. Please try again in ${retryAfter} seconds.`,
+      'RATE_LIMITED'
+    );
   }
-  const parseResult = z.string().email('Invalid email address').safeParse(email);
-  if (!parseResult.success) {
-    return createErrorResponse(parseResult.error.issues[0]?.message ?? 'Invalid email', 'VALIDATION_ERROR');
-  }
+
   try {
-    const participant = await getParticipantByEmail(parseResult.data);
+    const participant = await getParticipantByEmail(email);
     if (!participant) return createErrorResponse('Participant not found', 'NOT_FOUND');
     return { success: true, data: toClientParticipant(participant) };
   } catch (error) {
-    console.error('Error fetching participant by email:', error);
-    return createErrorResponse(error instanceof Error ? error.message : 'Failed to fetch participant', 'DB_ERROR');
+    return createErrorResponse(
+      error instanceof Error ? error.message : 'Failed to fetch participant',
+      'DB_ERROR'
+    );
   }
 }
 
-export async function getParticipantsAction(limit = 50): Promise<ActionResult<{ participants: ClientParticipant[]; count: number }>> {
+export async function getParticipantsAction(): Promise<ActionResult<ClientParticipant[]>> {
   const identifier = await getRateLimitIdentifier();
-  const rateLimitResult = await checkRateLimit(identifier, RateLimitPresets.API);
+  const rateLimitResult = await checkRateLimit(identifier, RateLimitPresets.READ);
   if (!rateLimitResult.allowed) {
-    const retryAfter = Math.max(1, Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000));
-    return createErrorResponse(`Rate limit exceeded. Please try again in ${retryAfter} seconds.`, 'RATE_LIMITED');
+    const retryAfter = Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000);
+    return createErrorResponse(
+      `Rate limit exceeded. Please try again in ${retryAfter} seconds.`,
+      'RATE_LIMITED'
+    );
   }
-  const parseResult = z.number().min(1).max(100).safeParse(limit);
-  const validLimit = parseResult.success ? parseResult.data : 50;
+
   try {
-    const dbParticipants = await getAllParticipants(validLimit);
-    const participants = dbParticipants.map(toClientParticipant);
-    return { success: true, data: { participants, count: participants.length } };
+    const participants = await getAllParticipants();
+    return { success: true, data: participants.map(toClientParticipant) };
   } catch (error) {
-    console.error('Error fetching participants:', error);
-    return createErrorResponse(error instanceof Error ? error.message : 'Failed to fetch participants', 'DB_ERROR');
+    return createErrorResponse(
+      error instanceof Error ? error.message : 'Failed to fetch participants',
+      'DB_ERROR'
+    );
   }
 }
 
-const PaginationInputSchema = z.object({
-  page: z.number().min(1).default(1),
-  pageSize: z.number().min(1).max(100).default(20),
-});
-type PaginationInput = z.infer<typeof PaginationInputSchema>;
-
-export async function getParticipantsPaginatedAction(input: PaginationInput): Promise<ActionResult<{ participants: ClientParticipant[]; total: number; pages: number; currentPage: number }>> {
+export async function getParticipantsPaginatedAction(
+  page: number,
+  pageSize: number
+): Promise<ActionResult<{ participants: ClientParticipant[]; total: number; pages: number }>> {
   const identifier = await getRateLimitIdentifier();
-  const rateLimitResult = await checkRateLimit(identifier, RateLimitPresets.API);
+  const rateLimitResult = await checkRateLimit(identifier, RateLimitPresets.READ);
   if (!rateLimitResult.allowed) {
-    const retryAfter = Math.max(1, Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000));
-    return createErrorResponse(`Rate limit exceeded. Please try again in ${retryAfter} seconds.`, 'RATE_LIMITED');
+    const retryAfter = Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000);
+    return createErrorResponse(
+      `Rate limit exceeded. Please try again in ${retryAfter} seconds.`,
+      'RATE_LIMITED'
+    );
   }
-  const parseResult = PaginationInputSchema.safeParse(input);
-  if (!parseResult.success) {
-    return createErrorResponse(parseResult.error.issues[0]?.message ?? 'Invalid pagination parameters', 'VALIDATION_ERROR');
-  }
-  const { page, pageSize } = parseResult.data;
+
   try {
     const result = await getParticipantsPaginated(page, pageSize);
-    return { success: true, data: { ...result, currentPage: page } };
+    return { success: true, data: result };
   } catch (error) {
-    console.error('Error fetching paginated participants:', error);
-    return createErrorResponse(error instanceof Error ? error.message : 'Failed to fetch participants', 'DB_ERROR');
+    return createErrorResponse(
+      error instanceof Error ? error.message : 'Failed to fetch participants',
+      'DB_ERROR'
+    );
   }
 }
 
 export async function getParticipantCountAction(): Promise<ActionResult<number>> {
   const identifier = await getRateLimitIdentifier();
-  const rateLimitResult = await checkRateLimit(identifier, RateLimitPresets.API);
+  const rateLimitResult = await checkRateLimit(identifier, RateLimitPresets.READ);
   if (!rateLimitResult.allowed) {
-    const retryAfter = Math.max(1, Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000));
-    return createErrorResponse(`Rate limit exceeded. Please try again in ${retryAfter} seconds.`, 'RATE_LIMITED');
+    const retryAfter = Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000);
+    return createErrorResponse(
+      `Rate limit exceeded. Please try again in ${retryAfter} seconds.`,
+      'RATE_LIMITED'
+    );
   }
+
   try {
     const count = await countParticipants();
     return { success: true, data: count };
   } catch (error) {
-    console.error('Error counting participants:', error);
-    return createErrorResponse(error instanceof Error ? error.message : 'Failed to count participants', 'DB_ERROR');
+    return createErrorResponse(
+      error instanceof Error ? error.message : 'Failed to count participants',
+      'DB_ERROR'
+    );
   }
 }
 
-export async function markMealConsumedAction(participantId: string, mealKey: string): Promise<ActionResult<boolean>> {
+/**
+ * Mark a meal as consumed for a participant.
+ * Writes a simple boolean true to meals.${mealKey} in MongoDB,
+ * aligned with the admin dashboard MealStatus structure.
+ */
+export async function markMealConsumedAction(
+  participantId: string,
+  mealKey: string
+): Promise<ActionResult<{ participantId: string; mealKey: string }>> {
   const identifier = await getRateLimitIdentifier();
   const rateLimitResult = await checkRateLimit(identifier, RateLimitPresets.API);
   if (!rateLimitResult.allowed) {
-    const retryAfter = Math.max(1, Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000));
-    return createErrorResponse(`Rate limit exceeded. Please try again in ${retryAfter} seconds.`, 'RATE_LIMITED');
+    const retryAfter = Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000);
+    return createErrorResponse(
+      `Rate limit exceeded. Please try again in ${retryAfter} seconds.`,
+      'RATE_LIMITED'
+    );
   }
-  if (!participantId || !mealKey) {
-    return createErrorResponse('Participant ID and Meal Key are required', 'VALIDATION_ERROR');
+
+  const validMealKeys = [
+    'day1_dinner',
+    'day2_breakfast',
+    'day2_lunch',
+    'day2_dinner',
+    'day3_breakfast',
+    'day3_lunch',
+  ];
+
+  if (!validMealKeys.includes(mealKey)) {
+    return createErrorResponse('Invalid meal key', 'VALIDATION_ERROR');
   }
+
   try {
-    const success = await updateMealStatus(participantId, mealKey);
-    if (!success) return createErrorResponse('Failed to update meal status. Participant may not exist.', 'NOT_FOUND');
-    return { success: true, data: true };
+    const participant = await getParticipantById(participantId);
+    if (!participant) return createErrorResponse('Participant not found', 'NOT_FOUND');
+
+    const alreadyConsumed = participant.meals?.[mealKey as keyof typeof participant.meals];
+    if (alreadyConsumed) {
+      return createErrorResponse('Meal already redeemed', 'VALIDATION_ERROR');
+    }
+
+    const updated = await updateMealStatus(participantId, mealKey);
+    if (!updated) return createErrorResponse('Failed to update meal status', 'DB_ERROR');
+
+    return { success: true, data: { participantId, mealKey } };
   } catch (error) {
-    console.error('Error updating meal status:', error);
-    return createErrorResponse(error instanceof Error ? error.message : 'Failed to update meal status', 'DB_ERROR');
+    return createErrorResponse(
+      error instanceof Error ? error.message : 'Failed to mark meal as consumed',
+      'DB_ERROR'
+    );
   }
 }
 
-export async function getTeamMembersAction(teamId: string): Promise<ActionResult<ClientParticipant[]>> {
+/**
+ * Get all members of a team by teamId.
+ */
+export async function getTeamMembersAction(
+  teamId: string
+): Promise<ActionResult<ClientParticipant[]>> {
   const identifier = await getRateLimitIdentifier();
-  const rateLimitResult = await checkRateLimit(identifier, RateLimitPresets.API);
+  const rateLimitResult = await checkRateLimit(identifier, RateLimitPresets.READ);
   if (!rateLimitResult.allowed) {
-    const retryAfter = Math.max(1, Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000));
-    return createErrorResponse(`Rate limit exceeded. Please try again in ${retryAfter} seconds.`, 'RATE_LIMITED');
+    const retryAfter = Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000);
+    return createErrorResponse(
+      `Rate limit exceeded. Please try again in ${retryAfter} seconds.`,
+      'RATE_LIMITED'
+    );
   }
-  if (!teamId) {
-    return createErrorResponse('Team ID is required', 'VALIDATION_ERROR');
-  }
+
   try {
-    const dbParticipants = await getParticipantsByTeamId(teamId);
-    const participants = dbParticipants.map(toClientParticipant);
-    return { success: true, data: participants };
+    const members = await getParticipantsByTeamId(teamId);
+    return { success: true, data: members.map(toClientParticipant) };
   } catch (error) {
-    console.error('Error fetching team members:', error);
-    return createErrorResponse(error instanceof Error ? error.message : 'Failed to fetch team members', 'DB_ERROR');
+    return createErrorResponse(
+      error instanceof Error ? error.message : 'Failed to fetch team members',
+      'DB_ERROR'
+    );
   }
 }
