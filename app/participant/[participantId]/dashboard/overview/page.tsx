@@ -76,38 +76,38 @@ export default function OverviewPage() {
             </div>
 
             {/* Main Content Area */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <section className="bg-white/5 border border-white/10 p-8 rounded-3xl">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+                <section className="bg-white/5 border border-white/10 p-6 md:p-8 rounded-3xl">
                     <h2 className="text-xl font-bold text-white mb-6">Your Details</h2>
                     <div className="space-y-4">
                         <div className="flex justify-between border-b border-white/5 pb-3">
                             <span className="text-gray-500">Participant ID</span>
-                            <span className="text-white font-mono">{participant.participantId}</span>
+                            <span className="text-white font-mono text-sm">{participant.participantId}</span>
                         </div>
                         <div className="flex justify-between border-b border-white/5 pb-3">
                             <span className="text-gray-500">Email</span>
-                            <span className="text-white">{participant.email}</span>
+                            <span className="text-white text-sm truncate max-w-[150px] md:max-w-none">{participant.email}</span>
                         </div>
                         <div className="flex justify-between border-b border-white/5 pb-3">
                             <span className="text-gray-500">Phone</span>
-                            <span className="text-white">{participant.phone || "N/A"}</span>
+                            <span className="text-white text-sm">{participant.phone || "N/A"}</span>
                         </div>
                         <div className="flex justify-between border-b border-white/5 pb-3">
                             <span className="text-gray-500">Institute</span>
-                            <span className="text-white truncate max-w-[200px] text-right">{participant.institute || "N/A"}</span>
+                            <span className="text-white truncate max-w-[150px] md:max-w-[200px] text-right text-sm">{participant.institute || "N/A"}</span>
                         </div>
                         <div className="flex justify-between border-b border-white/5 pb-3">
                             <span className="text-gray-500">Role</span>
-                            <span className="text-white font-semibold">{participant.role || "Hacker"}</span>
+                            <span className="text-white font-semibold text-sm">{participant.role || "Hacker"}</span>
                         </div>
                         <div className="flex justify-between border-b border-white/5 pb-3">
                             <span className="text-gray-500">Accommodation Room</span>
-                            <span className="text-white font-semibold text-[#FCB216]">{participant.roomNo || "Not Yet Assigned"}</span>
+                            <span className="text-white font-semibold text-[#FCB216] text-sm">{participant.roomNo || "Not Yet Assigned"}</span>
                         </div>
                     </div>
                 </section>
 
-                <section className="bg-gradient-to-br from-[#FCB216]/5 to-[#D91B57]/5 border border-white/10 p-8 rounded-3xl relative overflow-hidden">
+                <section className="bg-gradient-to-br from-[#FCB216]/5 to-[#D91B57]/5 border border-white/10 p-6 md:p-8 rounded-3xl relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-4 opacity-10">
                         <span className="text-8xl">🚀</span>
                     </div>

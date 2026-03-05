@@ -25,7 +25,7 @@ export const WifiCredentialsSchema = z.object({
  */
 export const CheckInStatusSchema = z.object({
   status: z.boolean(),
-  time: z.date().optional(),
+  time: z.date().nullable().optional(),
 });
 
 /**
@@ -64,6 +64,9 @@ export const DBParticipantSchema = z.object({
   wifiCredentials: WifiCredentialsSchema.optional(),
   collegeCheckIn: CheckInStatusSchema.optional(),
   labCheckIn: CheckInStatusSchema.optional(),
+  collegeCheckOut: CheckInStatusSchema.optional(),
+  labCheckOut: CheckInStatusSchema.optional(),
+  tempLabCheckOut: CheckInStatusSchema.optional(),
   mealStatus: MealStatusSchema.optional(), // <--- ADDED THIS LINE
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
@@ -113,13 +116,37 @@ export const ClientParticipantSchema = z.object({
       time: z.string().optional(),
     })
     .optional(),
+  collegeCheckOut: z
+    .object({
+      status: z.boolean(),
+      time: z.string().optional(),
+    })
+    .optional(),
+  labCheckOut: z
+    .object({
+      status: z.boolean(),
+      time: z.string().optional(),
+    })
+    .optional(),
+  tempLabCheckOut: z
+    .object({
+      status: z.boolean(),
+      time: z.string().optional(),
+    })
+    .optional(),
   mealStatus: ClientMealStatusSchema.optional(), // <--- ADDED THIS LINE
 });
 
 /**
  * Check-in type enum schema
  */
-export const CheckInTypeSchema = z.enum(['collegeCheckIn', 'labCheckIn']);
+export const CheckInTypeSchema = z.enum([
+  'collegeCheckIn',
+  'labCheckIn',
+  'collegeCheckOut',
+  'labCheckOut',
+  'tempLabCheckOut'
+]);
 
 /**
  * Check-in request input schema
@@ -189,17 +216,34 @@ export function toClientParticipant(participant: DBParticipant): ClientParticipa
         time: participant.labCheckIn.time?.toISOString(),
       }
       : undefined,
-      
-    // <--- ADDED THIS MEAL STATUS MAPPING --->
+    collegeCheckOut: participant.collegeCheckOut
+      ? {
+        status: participant.collegeCheckOut.status,
+        time: participant.collegeCheckOut.time?.toISOString(),
+      }
+      : undefined,
+    labCheckOut: participant.labCheckOut
+      ? {
+        status: participant.labCheckOut.status,
+        time: participant.labCheckOut.time?.toISOString(),
+      }
+      : undefined,
+    tempLabCheckOut: participant.tempLabCheckOut
+      ? {
+        status: participant.tempLabCheckOut.status,
+        time: participant.tempLabCheckOut.time?.toISOString(),
+      }
+      : undefined,
+
     mealStatus: participant.mealStatus
       ? {
-          day1_dinner: mapMealSlot(participant.mealStatus.day1_dinner),
-          day2_breakfast: mapMealSlot(participant.mealStatus.day2_breakfast),
-          day2_lunch: mapMealSlot(participant.mealStatus.day2_lunch),
-          day2_dinner: mapMealSlot(participant.mealStatus.day2_dinner),
-          day3_breakfast: mapMealSlot(participant.mealStatus.day3_breakfast),
-          day3_lunch: mapMealSlot(participant.mealStatus.day3_lunch),
-        }
+        day1_dinner: mapMealSlot(participant.mealStatus.day1_dinner),
+        day2_breakfast: mapMealSlot(participant.mealStatus.day2_breakfast),
+        day2_lunch: mapMealSlot(participant.mealStatus.day2_lunch),
+        day2_dinner: mapMealSlot(participant.mealStatus.day2_dinner),
+        day3_breakfast: mapMealSlot(participant.mealStatus.day3_breakfast),
+        day3_lunch: mapMealSlot(participant.mealStatus.day3_lunch),
+      }
       : undefined,
   };
 }

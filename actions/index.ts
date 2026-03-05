@@ -20,6 +20,9 @@ export {
   resetCheckInAction,
   collegeCheckInAction,
   labCheckInAction,
+  collegeCheckOutAction,
+  labCheckOutAction,
+  tempLabCheckOutAction,
   manualCheckInAction,
 } from './checkin';
 

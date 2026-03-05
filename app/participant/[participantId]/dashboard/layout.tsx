@@ -22,7 +22,7 @@ export default async function DashboardLayout({ children, params }: Props) {
                 participantId={participantId}
                 participantName={session.name}
             />
-            <main className="flex-1 p-8 overflow-auto h-screen relative">
+            <main className="flex-1 p-4 md:p-8 pt-20 md:pt-8 overflow-auto h-screen relative">
                 {/* Background Subtle Gradient */}
                 <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[#D91B57] rounded-full blur-[150px] opacity-[0.03] pointer-events-none" />
 

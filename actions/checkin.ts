@@ -254,6 +254,88 @@ export async function labCheckInAction(
 }
 
 /**
+ * Quick college check-out by participant ID
+ * Requires labCheckOut to be completed first.
+ */
+export async function collegeCheckOutAction(
+  participantId: string
+): Promise<ActionResult<CheckInSuccessData>> {
+  try {
+    const participant = await getParticipantById(participantId);
+    if (!participant) return createErrorResponse('Participant not found', 'NOT_FOUND');
+
+    if (!participant.labCheckOut?.status) {
+      return createErrorResponse(
+        'You must complete your Lab Exit before checking out from the event.',
+        'VALIDATION_ERROR'
+      );
+    }
+
+    return checkInAction({
+      participantId,
+      checkInType: 'collegeCheckOut',
+    });
+  } catch (error) {
+    return createErrorResponse('Failed to perform event check-out', 'DB_ERROR');
+  }
+}
+
+/**
+ * Quick lab check-out by participant ID
+ */
+export async function labCheckOutAction(
+  participantId: string
+): Promise<ActionResult<CheckInSuccessData>> {
+  return checkInAction({
+    participantId,
+    checkInType: 'labCheckOut',
+  });
+}
+
+/**
+ * Quick temporary lab check-out by participant ID (Toggles status)
+ */
+export async function tempLabCheckOutAction(
+  participantId: string
+): Promise<ActionResult<CheckInSuccessData>> {
+  try {
+    const participant = await getParticipantById(participantId);
+    if (!participant) return createErrorResponse('Participant not found', 'NOT_FOUND');
+
+    if (participant.tempLabCheckOut?.status) {
+      // Toggle back to IN (Reset the temp check-out)
+      const updated = await resetCheckIn(participantId, 'tempLabCheckOut');
+      if (!updated) return createErrorResponse('Failed to update status', 'DB_ERROR');
+
+      // Refresh the Lab Entry time to the current moment
+      await updateCheckIn(participantId, 'labCheckIn');
+
+      const updatedParticipant = {
+        ...participant,
+        tempLabCheckOut: { status: false },
+        labCheckIn: { status: true, time: new Date() }
+      };
+
+      return {
+        success: true,
+        data: {
+          participant: toClientParticipant(updatedParticipant),
+          checkInTime: new Date().toISOString()
+        },
+        message: 'Back in lab'
+      };
+    }
+
+    return checkInAction({
+      participantId,
+      checkInType: 'tempLabCheckOut',
+    });
+  } catch (error) {
+    return createErrorResponse('Failed to toggle temp check-out', 'DB_ERROR');
+  }
+}
+
+/**
  * Manual check-in verifying both Participant ID and Team ID
  */
 export async function manualCheckInAction(
