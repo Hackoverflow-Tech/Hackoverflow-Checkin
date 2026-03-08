@@ -11,11 +11,13 @@ import {
   Bell,
   Bot,
   UserCircle,
+  Users,
 } from 'lucide-react';
 import { DBParticipant } from '@/types';
 
 const NAV_ITEMS = [
   { href: '/portal/dashboard', icon: LayoutDashboard,   label: 'Home' },
+  { href: '/portal/team', icon: Users,   label: 'Team' },
   { href: '/portal/schedule',  icon: CalendarDays,      label: 'Schedule' },
   { href: '/portal/food',      icon: UtensilsCrossed,   label: 'Food' },
   { href: '/portal/alerts',    icon: Bell,              label: 'Alerts' },
