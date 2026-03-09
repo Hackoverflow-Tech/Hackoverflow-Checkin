@@ -1,4 +1,4 @@
-import { MongoClient } from 'mongodb';
+import { MongoClient, Db } from 'mongodb';
 
 if (!process.env.MONGODB_URI) {
   throw new Error('Please add your MongoDB URI to .env.local');
@@ -38,6 +38,14 @@ async function getClient(): Promise<MongoClient> {
   return _client;
 }
 
+// ✅ ADD THIS: Function that returns both client and db (for server actions)
+export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db }> {
+  const client = await getClient();
+  const db = client.db(process.env.MONGODB_DB || 'hackathon_db');
+  return { client, db };
+}
+
+// Keep your existing exports
 const clientPromise: Promise<MongoClient> = getClient();
 export default clientPromise;
 export { getClient };

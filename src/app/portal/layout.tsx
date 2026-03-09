@@ -21,7 +21,6 @@ const NAV_ITEMS = [
   { href: '/portal/schedule',  icon: CalendarDays,      label: 'Schedule' },
   { href: '/portal/food',      icon: UtensilsCrossed,   label: 'Food' },
   { href: '/portal/alerts',    icon: Bell,              label: 'Alerts' },
-  { href: '/portal/chatbot',   icon: Bot,               label: 'AI' },
   { href: '/portal/profile',   icon: UserCircle,        label: 'Profile' },
 ];
 

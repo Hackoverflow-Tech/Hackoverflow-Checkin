@@ -20,8 +20,10 @@ import {
   LogOut,
   Eye,
   EyeOff,
+  UtensilsCrossed,
 } from 'lucide-react';
 import type { DBParticipant } from '@/types';
+import { MEAL_LABELS } from '@/types';
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -67,33 +69,20 @@ export default function ProfilePage() {
     window.location.href = '/login';
   }
 
-  // Get initials for avatar
   function getInitials(name: string) {
     return name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
   }
 
   const p = participant;
 
-  const checkIns = p ? [
-    {
-      label: 'College Check-In',
-      icon: Building2,
-      status: p.collegeCheckIn?.status,
-      time: p.collegeCheckIn?.time,
-    },
-    {
-      label: 'Lab Check-In',
-      icon: FlaskConical,
-      status: p.labCheckIn?.status,
-      time: p.labCheckIn?.time,
-    },
-    {
-      label: 'Checked Out',
-      icon: LogOut,
-      status: p.collegeCheckOut?.status,
-      time: p.collegeCheckOut?.time,
-    },
-  ] : [];
+  // Meal rows from MealStatus + MEAL_LABELS
+  const mealRows = p?.meals
+    ? (Object.keys(MEAL_LABELS) as Array<keyof typeof MEAL_LABELS>).map(key => ({
+        key,
+        label: MEAL_LABELS[key],
+        collected: p.meals![key],
+      }))
+    : [];
 
   function formatDate(d?: Date | string) {
     if (!d) return null;
@@ -106,7 +95,7 @@ export default function ProfilePage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400 ;600;700;800&display=swap');
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -142,7 +131,7 @@ export default function ProfilePage() {
         /* Animations */
         @keyframes fadeUp { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:translateY(0); } }
         .au { animation: fadeUp 0.5s ease both; }
-        .d1 { animation-delay: 0.04s; } .d2 { animation-delay: 0.12s; } .d3 { animation-delay: 0.20s; } .d4 { animation-delay: 0.28s; }
+        .d1 { animation-delay: 0.04s; } .d2 { animation-delay: 0.12s; } .d3 { animation-delay: 0.20s; } .d4 { animation-delay: 0.28s; } .d5 { animation-delay: 0.36s; }
 
         /* Loading */
         .loading-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; min-height: 240px; }
@@ -219,22 +208,16 @@ export default function ProfilePage() {
         .info-val { font-size: clamp(0.78rem,2vw,0.88rem); font-weight: 600; word-break: break-all; margin-top: 1px; }
         .info-body { flex: 1; min-width: 0; }
 
-        /* ── Checkin rows ── */
-        .checkin-row {
+        /* ── Meal rows ── */
+        .meal-grid { display: flex; flex-direction: column; gap: 0; }
+        .meal-row {
           display: flex; align-items: center; justify-content: space-between;
-          padding: 0.75rem 0;
+          padding: 0.65rem 0;
           border-bottom: 1px solid rgba(255,255,255,0.05);
           gap: 0.75rem;
         }
-        .checkin-row:last-child { border-bottom: none; }
-        .checkin-left { display: flex; align-items: center; gap: 0.65rem; }
-        .checkin-icon { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .checkin-name { font-size: 0.85rem; font-weight: 600; }
-        .checkin-time { font-size: 0.6rem; color: var(--muted); margin-top: 1px; }
-
-        .status-pill { display: inline-flex; align-items: center; gap: 0.28rem; padding: 0.22rem 0.65rem; border-radius: var(--pill); font-size: 0.58rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; white-space: nowrap; flex-shrink: 0; }
-        .sp-yes { background: rgba(74,222,128,0.12); border: 1px solid rgba(74,222,128,0.3); color: var(--success); }
-        .sp-no  { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--muted); }
+        .meal-row:last-child { border-bottom: none; }
+        .meal-label { font-size: 0.82rem; font-weight: 600; }
 
         /* ── WiFi card ── */
         .wifi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
@@ -298,9 +281,10 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Contact info + Venue grid */}
+              {/* Main grid */}
               <div className="g2 au d3">
-                {/* Personal info */}
+
+                {/* Personal Info */}
                 <div className="card">
                   <div className="lbl"><User size={12} />Personal Info</div>
                   <div className="info-list">
@@ -329,10 +313,10 @@ export default function ProfilePage() {
                   <div className="lbl"><Users size={12} />Team & Project</div>
                   <div className="info-list">
                     {[
-                      { icon: Users,      key: 'Team Name',    val: p.teamName },
-                      { icon: ShieldCheck,key: 'Team ID',      val: p.teamId },
-                      { icon: FolderGit2, key: 'Project',      val: p.projectName },
-                      { icon: FlaskConical,key: 'Lab Allotted',val: p.labAllotted },
+                      { icon: Users,        key: 'Team Name',    val: p.teamName },
+                      { icon: ShieldCheck,  key: 'Team ID',      val: p.teamId },
+                      { icon: FolderGit2,   key: 'Project',      val: p.projectName },
+                      { icon: FlaskConical, key: 'Lab Allotted', val: p.labAllotted },
                     ].filter(r => r.val).map((row, i) => {
                       const Icon = row.icon;
                       return (
@@ -351,39 +335,24 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                {/* Check-in Status */}
-                <div className="card">
-                  <div className="lbl"><ShieldCheck size={12} />Check-in Status</div>
-                  {checkIns.map((c, i) => {
-                    const Icon = c.icon;
-                    return (
-                      <div className="checkin-row" key={i}>
-                        <div className="checkin-left">
-                          <div
-                            className="checkin-icon"
-                            style={{
-                              background: c.status ? 'rgba(74,222,128,0.1)' : 'rgba(255,255,255,0.05)',
-                              color: c.status ? 'var(--success)' : 'var(--muted)',
-                            }}
-                          >
-                            <Icon size={15} />
-                          </div>
-                          <div>
-                            <div className="checkin-name">{c.label}</div>
-                            {c.status && c.time && (
-                              <div className="checkin-time">{formatDate(c.time)}</div>
-                            )}
-                          </div>
+                {/* Meal Status */}
+                {p.meals && (
+                  <div className="card">
+                    <div className="lbl"><UtensilsCrossed size={12} />Meal Status</div>
+                    <div className="meal-grid">
+                      {mealRows.map((m) => (
+                        <div className="meal-row" key={m.key}>
+                          <span className="meal-label">{m.label}</span>
+                          <span className={`status-pill ${m.collected ? 'sp-yes' : 'sp-no'}`}>
+                            {m.collected
+                              ? <><CheckCircle2 size={9} /> Collected</>
+                              : <><Clock size={9} /> Pending</>}
+                          </span>
                         </div>
-                        <span className={`status-pill ${c.status ? 'sp-yes' : 'sp-no'}`}>
-                          {c.status
-                            ? <><CheckCircle2 size={9} /> Done</>
-                            : <><Clock size={9} /> Pending</>}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* WiFi Credentials */}
                 {(p.wifiCredentials?.ssid || p.wifiCredentials?.password) && (
@@ -420,10 +389,11 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 )}
+
               </div>
 
               {/* Logout */}
-              <div className="au d4">
+              <div className="au d5">
                 <button className="logout-btn" onClick={handleLogout}>
                   <LogOut size={15} />
                   Sign Out of Portal
