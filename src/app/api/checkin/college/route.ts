@@ -16,8 +16,8 @@ export async function POST(req: NextRequest) {
       { participantId },
       {
         $set: {
-          college_checkin: 'Yes',
-          college_checkin_time: new Date().toISOString(),
+          'collegeCheckIn.status': true,
+          'collegeCheckIn.time': new Date(),
           updatedAt: new Date(),
         },
       }

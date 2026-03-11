@@ -22,7 +22,7 @@ export default function CollegeCheckInPage() {
         if (data.error) setError(data.error);
         else {
           setParticipant(data.participant);
-          if (data.participant.college_checkin === 'Yes') setDone(true);
+          if (data.participant.collegeCheckIn?.status === true) setDone(true);
         }
       })
       .catch(() => setError('Failed to load participant'))
@@ -109,11 +109,11 @@ export default function CollegeCheckInPage() {
   `;
 
   const DOTS = [
-    { top: '15%', left: '8%',   color: '#FCB216', delay: '0s'   },
+    { top: '15%', left: '8%', color: '#FCB216', delay: '0s' },
     { top: '25%', right: '10%', color: '#E85D24', delay: '0.5s' },
-    { top: '70%', left: '5%',   color: '#D91B57', delay: '1s'   },
-    { top: '80%', right: '8%',  color: '#FCB216', delay: '1.5s' },
-    { top: '45%', left: '92%',  color: '#63205F', delay: '0.8s' },
+    { top: '70%', left: '5%', color: '#D91B57', delay: '1s' },
+    { top: '80%', right: '8%', color: '#FCB216', delay: '1.5s' },
+    { top: '45%', left: '92%', color: '#63205F', delay: '0.8s' },
   ];
 
   return (
@@ -139,17 +139,17 @@ export default function CollegeCheckInPage() {
           </div>
 
           {loading ? (
-            <div style={{ display:'flex', flexDirection:'column', gap:'1rem' }}>
-              <div className="skeleton" style={{ height:'16px', width:'40%', margin:'0 auto' }} />
-              <div className="skeleton" style={{ height:'48px', width:'70%', margin:'0 auto' }} />
-              <div className="skeleton" style={{ height:'56px' }} /><div className="skeleton" style={{ height:'56px' }} />
-              <div className="skeleton" style={{ height:'56px' }} /><div className="skeleton" style={{ height:'52px', marginTop:'.5rem' }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="skeleton" style={{ height: '16px', width: '40%', margin: '0 auto' }} />
+              <div className="skeleton" style={{ height: '48px', width: '70%', margin: '0 auto' }} />
+              <div className="skeleton" style={{ height: '56px' }} /><div className="skeleton" style={{ height: '56px' }} />
+              <div className="skeleton" style={{ height: '56px' }} /><div className="skeleton" style={{ height: '52px', marginTop: '.5rem' }} />
             </div>
           ) : error && !participant ? (
-            <div style={{ textAlign:'center' }}>
-              <div style={{ fontSize:'3rem', marginBottom:'1rem' }}>😕</div>
-              <p style={{ color:'#D91B57', fontWeight:600 }}>{error}</p>
-              <p style={{ color:'rgba(255,255,255,0.4)', fontSize:'.85rem', marginTop:'.5rem' }}>Please contact event staff for help.</p>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>😕</div>
+              <p style={{ color: '#D91B57', fontWeight: 600 }}>{error}</p>
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '.85rem', marginTop: '.5rem' }}>Please contact event staff for help.</p>
             </div>
           ) : participant ? (
             <>
@@ -186,7 +186,7 @@ export default function CollegeCheckInPage() {
 
               {/* ── State machine: success → already-done → idle button ── */}
               {success ? (
-                <div className="success-state" style={{ marginTop:'.5rem' }}>
+                <div className="success-state" style={{ marginTop: '.5rem' }}>
                   <div className="success-icon">✅</div>
                   <p className="success-title">Checked In!</p>
                   <p className="success-sub">Setting up your password…</p>
