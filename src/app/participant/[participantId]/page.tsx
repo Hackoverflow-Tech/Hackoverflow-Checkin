@@ -13,6 +13,7 @@ export default function CollegeCheckInPage() {
   const [error, setError] = useState('');
   const [checking, setChecking] = useState(false);
   const [done, setDone] = useState(false);
+  const [success, setSuccess] = useState(false); // ← NEW: separate from done
 
   useEffect(() => {
     fetch(`/api/participant/${participantId}`)
@@ -21,7 +22,7 @@ export default function CollegeCheckInPage() {
         if (data.error) setError(data.error);
         else {
           setParticipant(data.participant);
-          if (data.participant.collegeCheckIn?.status) setDone(true);
+          if (data.participant.college_checkin === 'Yes') setDone(true);
         }
       })
       .catch(() => setError('Failed to load participant'))
@@ -39,7 +40,7 @@ export default function CollegeCheckInPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setDone(true);
+        setSuccess(true); // ← show success animation immediately
         setTimeout(() => router.push(`/set-password/${participantId}`), 1500);
       } else {
         setError(data.error || 'Check-in failed');
@@ -183,24 +184,26 @@ export default function CollegeCheckInPage() {
                 )}
               </div>
 
-              {done ? (
+              {/* ── State machine: success → already-done → idle button ── */}
+              {success ? (
+                <div className="success-state" style={{ marginTop:'.5rem' }}>
+                  <div className="success-icon">✅</div>
+                  <p className="success-title">Checked In!</p>
+                  <p className="success-sub">Setting up your password…</p>
+                </div>
+              ) : done ? (
                 <>
                   <div className="already-badge">✅ College check-in already recorded</div>
                   <button className="btn-ghost" onClick={() => router.push(`/set-password/${participantId}`)}>
                     Continue to Set Password →
                   </button>
                 </>
-              ) : checking ? (
-                <div className="success-state" style={{ marginTop:'.5rem' }}>
-                  <div className="success-icon">✅</div>
-                  <p className="success-title">Checked In!</p>
-                  <p className="success-sub">Setting up your password…</p>
-                </div>
               ) : (
                 <button className="btn-primary" onClick={handleCheckIn} disabled={checking}>
-                  ✅ Confirm College Check-In
+                  {checking ? 'Checking in…' : '✅ Confirm College Check-In'}
                 </button>
               )}
+
               {error && <div className="error-box">{error}</div>}
             </>
           ) : null}

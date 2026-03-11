@@ -14,7 +14,13 @@ export async function POST(req: NextRequest) {
     const db = client.db(DB_NAME);
     const result = await db.collection(COLLECTION).updateOne(
       { participantId },
-      { $set: { 'collegeCheckIn.status': true, 'collegeCheckIn.time': new Date(), updatedAt: new Date() } }
+      {
+        $set: {
+          college_checkin: 'Yes',
+          college_checkin_time: new Date().toISOString(),
+          updatedAt: new Date(),
+        },
+      }
     );
     if (result.matchedCount === 0) {
       return NextResponse.json({ error: 'Participant not found' }, { status: 404 });
